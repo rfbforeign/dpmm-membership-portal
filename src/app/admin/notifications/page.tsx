@@ -4,7 +4,12 @@ import { requireRole } from "@/modules/auth/dal";
 import { STAFF_ROLES } from "@/modules/auth/roles";
 import { sendQueuedNow } from "@/modules/notifications/actions";
 import { previewAutomation } from "@/modules/notifications/automation";
-import { getNotificationOverview, STATUS_FILTERS } from "@/modules/notifications/queries";
+import {
+  getNotificationOverview,
+  STATUS_FILTERS,
+  type NotificationLogRow,
+  type NotificationRunRow,
+} from "@/modules/notifications/queries";
 import { EXPIRY_LOOKBACK_DAYS, RENEWAL_LEAD_DAYS } from "@/modules/notifications/reminders";
 
 export const metadata: Metadata = { title: "Renewals and emails" };
@@ -149,7 +154,7 @@ export default async function NotificationsPage({
                 </tr>
               </thead>
               <tbody>
-                {overview.runs.map((run, i) => {
+                {overview.runs.map((run: NotificationRunRow, i) => {
                   const s = (run.summary ?? {}) as Record<string, unknown>;
                   const invoices = Array.isArray(s.renewalInvoicesCreated) ? s.renewalInvoicesCreated.length : 0;
                   const expired = Array.isArray(s.expired) ? s.expired.length : 0;
@@ -227,7 +232,7 @@ export default async function NotificationsPage({
                 </tr>
               </thead>
               <tbody>
-                {overview.recent.map((n) => (
+                {overview.recent.map((n: NotificationLogRow) => (
                   <tr key={String(n.id)} className="border-b border-line align-top last:border-b-0">
                     <td className="whitespace-nowrap px-4 py-2.5 tabular-nums">{String(n.created)}</td>
                     <td className="px-4 py-2.5">{TYPE_LABEL[String(n.type)] ?? String(n.type)}</td>

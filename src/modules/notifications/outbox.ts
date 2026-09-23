@@ -17,7 +17,7 @@ export interface NewNotification {
 
 /** Puts an email in the queue. Returns the new id, or null when this email was already queued before. */
 export async function enqueueNotification(n: NewNotification): Promise<string | null> {
-  const rows = await getSql().query(
+  const rows = await getSql()(
     `INSERT INTO notification_logs (member_id, invoice_id, type, channel, recipient, subject, message, body_html, status, dedupe_key)
      VALUES ($1::uuid, $2::uuid, $3::notification_type, 'email', $4, $5, $6, $7, 'queued', $8)
      ON CONFLICT (dedupe_key) DO NOTHING
@@ -51,7 +51,7 @@ export async function sendQueued(limit: number): Promise<SendSummary> {
   if (!sendingAllowed()) return { attempted: 0, sent: 0, failed: 0, skipped: "not_production" };
 
   const sql = getSql();
-  const claimed = await sql.query(
+  const claimed = await sql(
     `UPDATE notification_logs SET attempts = attempts + 1, last_attempt_at = now()
      WHERE id IN (
        SELECT id FROM notification_logs
@@ -80,14 +80,14 @@ export async function sendQueued(limit: number): Promise<SendSummary> {
 
     if (result.ok) {
       sent++;
-      await sql.query(
+      await sql(
         `UPDATE notification_logs SET status = 'sent', sent_at = now(), provider_message_id = $2, error = NULL WHERE id = $1::uuid`,
         [row.id, result.id]
       );
     } else {
       failed++;
       // A permanent failure (bad address, rejected message) uses up all attempts so it is not retried
-      await sql.query(
+      await sql(
         `UPDATE notification_logs SET status = 'failed', error = $2, attempts = CASE WHEN $3 THEN attempts ELSE GREATEST(attempts, ${MAX_ATTEMPTS}) END
          WHERE id = $1::uuid`,
         [row.id, result.error, result.retryable]

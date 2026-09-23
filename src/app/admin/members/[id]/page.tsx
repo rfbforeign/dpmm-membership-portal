@@ -6,7 +6,7 @@ import { STAFF_ROLES } from "@/modules/auth/roles";
 import { canEditMembers } from "@/modules/members/permissions";
 import { formatRM } from "@/lib/money";
 import { InvoiceStatusBadge } from "@/modules/billing/invoice-status-badge";
-import { getMemberInvoices, getMemberPeriods } from "@/modules/billing/queries";
+import { getMemberInvoices, getMemberPeriods, type MemberInvoiceRow, type MemberPeriodRow } from "@/modules/billing/queries";
 import { todayInMalaysia } from "@/lib/normalize";
 import { TYPE_LABEL, type InvoiceType } from "@/modules/billing/validation";
 import { getMember } from "@/modules/members/queries";
@@ -124,7 +124,7 @@ export default async function MemberPage({
           <p className="mt-3 rounded-md border border-line bg-paper px-5 py-4 text-primary-deep/75">No invoices yet.</p>
         ) : (
           <ul className="mt-3 rounded-md border border-line bg-paper">
-            {invoices.map((inv) => (
+            {invoices.map((inv: MemberInvoiceRow) => (
               <li key={String(inv.id)} className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line px-5 py-3.5 last:border-b-0">
                 <Link href={`/admin/invoices/${inv.id}`} className="font-semibold text-primary underline">{String(inv.invoice_no)}</Link>
                 <span>{TYPE_LABEL[inv.invoice_type as InvoiceType] ?? String(inv.invoice_type)}</span>
@@ -145,7 +145,7 @@ export default async function MemberPage({
           </p>
         ) : (
           <ul className="mt-3 rounded-md border border-line bg-paper">
-            {periods.map((per) => (
+            {periods.map((per: MemberPeriodRow) => (
               <li key={`${per.period_start}-${per.period_end}`} className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b border-line px-5 py-3.5 last:border-b-0">
                 <span className="tabular-nums font-semibold text-primary">{String(per.period_start)} to {String(per.period_end)}</span>
                 <span className="text-sm text-primary-deep/75">

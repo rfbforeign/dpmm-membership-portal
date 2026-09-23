@@ -34,7 +34,7 @@ interface DueReminder {
 }
 
 async function findDueReminders(): Promise<DueReminder[]> {
-  const rows = await getSql().query(
+  const rows = await getSql()(
     `SELECT s.id AS invoice_id, s.invoice_no, s.amount::text AS amount, s.balance::text AS balance, s.due_date::text AS due_date,
             (s.due_date - my_today()) AS days_to_due,
             m.id AS member_id, m.full_name, m.email, m.membership_no
@@ -81,20 +81,20 @@ export interface Preview {
 export async function previewAutomation(): Promise<Preview> {
   const sql = getSql();
   const [expire, candidates, due, [review], [noDate]] = await Promise.all([
-    sql.query(`SELECT out_membership_no, out_expiry_date::text AS expired_on FROM automation_expire_members($1, false)`, [EXPIRY_LOOKBACK_DAYS]),
-    sql.query(`SELECT out_membership_no, out_expiry_date::text AS expires_on FROM automation_renewal_candidates($1)`, [RENEWAL_LEAD_DAYS]),
+    sql(`SELECT out_membership_no, out_expiry_date::text AS expired_on FROM automation_expire_members($1, false)`, [EXPIRY_LOOKBACK_DAYS]),
+    sql(`SELECT out_membership_no, out_expiry_date::text AS expires_on FROM automation_renewal_candidates($1)`, [RENEWAL_LEAD_DAYS]),
     findDueReminders(),
-    sql.query(
+    sql(
       `SELECT count(*)::int AS n FROM members WHERE deleted_at IS NULL AND status = 'active' AND expiry_date < my_today() - $1::int`,
       [EXPIRY_LOOKBACK_DAYS]
     ),
-    sql.query(`SELECT count(*)::int AS n FROM members WHERE deleted_at IS NULL AND status = 'active' AND expiry_date IS NULL`),
+    sql(`SELECT count(*)::int AS n FROM members WHERE deleted_at IS NULL AND status = 'active' AND expiry_date IS NULL`),
   ]);
 
   // Leave out reminders that have already been queued, so the preview shows only new work
   const keys = due.map((d) => reminderKey(d.invoiceId, d.stage));
   const already = keys.length
-    ? new Set((await sql.query(`SELECT dedupe_key FROM notification_logs WHERE dedupe_key = ANY($1::text[])`, [keys])).map((r) => String(r.dedupe_key)))
+    ? new Set((await sql(`SELECT dedupe_key FROM notification_logs WHERE dedupe_key = ANY($1::text[])`, [keys])).map((r) => String(r.dedupe_key)))
     : new Set<string>();
 
   return {
@@ -146,12 +146,12 @@ export async function runDailyAutomation(mode: AutomationMode): Promise<RunSumma
   };
 
   // A run that never finished (crashed or timed out) must not block the day
-  await sql.query(
+  await sql(
     `UPDATE automation_runs SET status = 'failed', finished_at = now(), error = 'Timed out' WHERE status = 'running' AND started_at < now() - interval '15 minutes'`
   );
 
   // One live run a day: the database refuses a second one
-  const started = await sql.query(
+  const started = await sql(
     `INSERT INTO automation_runs (run_date, mode) VALUES ($1::date, $2)
      ON CONFLICT (run_date) WHERE mode = 'live' AND status IN ('running', 'done') DO NOTHING
      RETURNING id`,
@@ -171,7 +171,7 @@ export async function runDailyAutomation(mode: AutomationMode): Promise<RunSumma
       await liveRun(summary);
     }
 
-    await sql.query(`UPDATE automation_runs SET status = 'done', finished_at = now(), summary = $2::jsonb WHERE id = $1`, [
+    await sql(`UPDATE automation_runs SET status = 'done', finished_at = now(), summary = $2::jsonb WHERE id = $1`, [
       runId,
       JSON.stringify(summary),
     ]);
@@ -179,7 +179,7 @@ export async function runDailyAutomation(mode: AutomationMode): Promise<RunSumma
   } catch (error) {
     console.error("Daily automation failed", error);
     const message = error instanceof Error ? error.message.slice(0, 300) : "Unknown error";
-    await sql.query(`UPDATE automation_runs SET status = 'failed', finished_at = now(), error = $2, summary = $3::jsonb WHERE id = $1`, [
+    await sql(`UPDATE automation_runs SET status = 'failed', finished_at = now(), error = $2, summary = $3::jsonb WHERE id = $1`, [
       runId,
       message,
       JSON.stringify(summary),
@@ -192,12 +192,12 @@ async function liveRun(summary: RunSummary): Promise<void> {
   const sql = getSql();
 
   // 1. Members whose paid period recently ended become Expired, and are told
-  const expired = await sql.query(`SELECT out_member_id, out_membership_no, out_expiry_date::text AS expiry_date FROM automation_expire_members($1, true)`, [
+  const expired = await sql(`SELECT out_member_id, out_membership_no, out_expiry_date::text AS expiry_date FROM automation_expire_members($1, true)`, [
     EXPIRY_LOOKBACK_DAYS,
   ]);
   for (const e of expired) {
     summary.expired.push(String(e.out_membership_no));
-    const [m] = await sql.query(
+    const [m] = await sql(
       `SELECT m.full_name, m.email,
               (SELECT invoice_no FROM invoice_summary WHERE member_id = m.id AND status = 'unpaid' AND invoice_type = 'renewal' ORDER BY created_at DESC LIMIT 1) AS invoice_no,
               (SELECT balance::text FROM invoice_summary WHERE member_id = m.id AND status = 'unpaid' AND invoice_type = 'renewal' ORDER BY created_at DESC LIMIT 1) AS balance
@@ -225,17 +225,17 @@ async function liveRun(summary: RunSummary): Promise<void> {
   }
 
   // 2. Members whose year is nearly up get their renewal invoice, and an email
-  const candidates = await sql.query(`SELECT out_member_id, out_membership_no FROM automation_renewal_candidates($1)`, [RENEWAL_LEAD_DAYS]);
+  const candidates = await sql(`SELECT out_member_id, out_membership_no FROM automation_renewal_candidates($1)`, [RENEWAL_LEAD_DAYS]);
   for (const c of candidates) {
     try {
-      const [inv] = await sql.query(
+      const [inv] = await sql(
         `SELECT out_invoice_id, out_invoice_no, out_amount::text AS amount, out_period_start::text AS period_start,
                 out_period_end::text AS period_end, out_due_date::text AS due_date
          FROM create_renewal_invoice($1::uuid)`,
         [c.out_member_id]
       );
       summary.renewalInvoicesCreated.push(String(inv.out_invoice_no));
-      const [m] = await sql.query(`SELECT full_name, email, expiry_date::text AS expiry_date FROM members WHERE id = $1::uuid`, [c.out_member_id]);
+      const [m] = await sql(`SELECT full_name, email, expiry_date::text AS expiry_date FROM members WHERE id = $1::uuid`, [c.out_member_id]);
       const mail = renderEmail("invoice_issued", {
         memberName: String(m.full_name),
         membershipNo: String(c.out_membership_no),

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/modules/auth/dal";
+import { DPMM_LOGO_DATA_URI } from "@/lib/logo";
 import { SignOutButton } from "@/modules/auth/sign-out-button";
 
 export const metadata: Metadata = { title: "Member portal" };
@@ -11,7 +12,13 @@ export default async function PortalPage() {
     <>
       <header className="border-b-4 border-accent bg-primary text-cream">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-6 py-4">
-          <span aria-hidden="true" className="h-6 w-6 rounded-sm bg-accent" />
+          <img
+            src={DPMM_LOGO_DATA_URI}
+            alt="DPMM Putrajaya"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
+          />
           <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
           <div className="ml-auto flex items-center gap-4">
             <span className="hidden text-sm text-cream/80 sm:inline">{user.email}</span>

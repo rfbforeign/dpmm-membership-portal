@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { DPMM_LOGO_DATA_URI } from "@/lib/logo";
 import { safeNext } from "@/lib/safe-redirect";
 import { getCurrentUser } from "@/modules/auth/dal";
 import { roleHome } from "@/modules/auth/roles";
@@ -23,7 +24,13 @@ export default async function LoginPage({
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <aside className="border-b-4 border-accent bg-primary px-8 py-8 text-cream lg:border-b-0 lg:border-r-4 lg:px-14 lg:py-14">
         <Link href="/" className="flex items-center gap-3">
-          <span aria-hidden="true" className="h-6 w-6 rounded-sm bg-accent" />
+          <img
+            src={DPMM_LOGO_DATA_URI}
+            alt="DPMM Putrajaya"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
+          />
           <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
         </Link>
         <div className="mt-10 hidden max-w-sm lg:mt-32 lg:block">

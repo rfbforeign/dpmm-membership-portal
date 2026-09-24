@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DPMM_LOGO_DATA_URI } from "@/lib/logo";
 import { requireRole } from "@/modules/auth/dal";
 import { ROLE_LABEL, STAFF_ROLES } from "@/modules/auth/roles";
 import { SignOutButton } from "@/modules/auth/sign-out-button";
@@ -11,7 +12,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="border-b-4 border-accent bg-primary text-cream print:hidden">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-6 py-4">
           <Link href="/admin" className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-6 w-6 rounded-sm bg-accent" />
+            <img
+            src={DPMM_LOGO_DATA_URI}
+            alt="DPMM Putrajaya"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
+          />
             <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
           </Link>
 

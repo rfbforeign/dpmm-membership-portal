@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatRM } from "@/lib/money";
 import { hasBankDetails, ORG } from "@/lib/org";
+import { DPMM_LOGO_DATA_URI } from "@/lib/logo";
 import { requireRole } from "@/modules/auth/dal";
 import { STAFF_ROLES } from "@/modules/auth/roles";
 import { getInvoice } from "@/modules/billing/queries";
@@ -34,14 +35,23 @@ export default async function PrintInvoicePage({ params }: { params: Promise<{ i
 
       <article className="mx-auto max-w-3xl rounded-md border border-line bg-white p-8 text-primary-deep print:max-w-none print:border-0 print:p-0 sm:p-12">
         <header className="flex flex-wrap items-start justify-between gap-6 border-b-4 border-accent pb-6">
-          <div>
-            <p className="font-display text-3xl font-bold tracking-tight text-primary">{ORG.name}</p>
-            {ORG.legalName && <p className="text-sm font-semibold">{ORG.legalName}</p>}
-            {ORG.address.map((line) => (
-              <p key={line} className="text-sm">{line}</p>
-            ))}
-            {ORG.email && <p className="text-sm">{ORG.email}</p>}
-            {ORG.phone && <p className="text-sm">{ORG.phone}</p>}
+          <div className="flex items-start gap-4">
+            <img
+              src={DPMM_LOGO_DATA_URI}
+              alt=""
+              width={56}
+              height={56}
+              className="h-14 w-14 shrink-0 object-contain"
+            />
+            <div>
+              <p className="font-display text-3xl font-bold tracking-tight text-primary">{ORG.name}</p>
+              {ORG.legalName && <p className="text-sm font-semibold">{ORG.legalName}</p>}
+              {ORG.address.map((line) => (
+                <p key={line} className="text-sm">{line}</p>
+              ))}
+              {ORG.email && <p className="text-sm">{ORG.email}</p>}
+              {ORG.phone && <p className="text-sm">{ORG.phone}</p>}
+            </div>
           </div>
           <div className="text-right">
             <p className="font-display text-3xl font-bold uppercase tracking-tight text-primary">Invoice</p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { formatRM } from "@/lib/money";
 import { hasBankDetails, ORG } from "@/lib/org";
+import { DPMM_LOGO_DATA_URI } from "@/lib/logo";
 
 export const metadata: Metadata = { title: "Application received" };
 
@@ -26,7 +27,13 @@ export default async function ThanksPage({
       <header className="border-b-4 border-accent bg-primary text-cream">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-6 w-6 rounded-sm bg-accent" />
+            <img
+            src={DPMM_LOGO_DATA_URI}
+            alt="DPMM Putrajaya"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
+          />
             <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
           </Link>
         </div>

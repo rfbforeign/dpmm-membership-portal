@@ -17,10 +17,11 @@ const body = Public_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "DPMM Members",
+    default: "DPMM Members | Dewan Perniagaan Melayu Malaysia",
     template: "%s | DPMM Members",
   },
-  description: "Membership management for DPMM Putrajaya.",
+  description:
+    "Membership management for Dewan Perniagaan Melayu Malaysia (DPMM), Putrajaya chapter.",
 };
 
 export default function RootLayout({

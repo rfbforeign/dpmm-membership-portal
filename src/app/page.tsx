@@ -30,14 +30,19 @@ export default async function HomePage() {
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-6 py-4">
           <img
             src={DPMM_LOGO_DATA_URI}
-            alt="DPMM Putrajaya"
+            alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
             width={28}
             height={28}
             className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
           />
-          <span className="font-display text-xl font-semibold tracking-tight">
-            DPMM Putrajaya
-          </span>
+          <div className="leading-tight">
+            <span className="block font-display text-xl font-semibold tracking-tight">
+              DPMM Putrajaya
+            </span>
+            <span className="block text-xs font-medium text-cream/70">
+              Dewan Perniagaan Melayu Malaysia
+            </span>
+          </div>
           <Link
             href="/login"
             className="ml-auto rounded-md border border-current px-3 py-1.5 text-sm font-semibold hover:bg-white/10"
@@ -53,7 +58,7 @@ export default async function HomePage() {
         </h1>
         <p className="mt-4 max-w-prose text-lg">
           Registration and annual fees for each membership category under Fasal 6.2 of the
-          DPMM constitution.
+          Dewan Perniagaan Melayu Malaysia (DPMM) constitution.
         </p>
         <Link
           href="/register"

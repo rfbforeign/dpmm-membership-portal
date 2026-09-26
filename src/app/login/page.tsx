@@ -26,19 +26,27 @@ export default async function LoginPage({
         <Link href="/" className="flex items-center gap-3">
           <img
             src={DPMM_LOGO_DATA_URI}
-            alt="DPMM Putrajaya"
+            alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
             width={28}
             height={28}
             className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
           />
-          <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
+          <div className="leading-tight">
+            <span className="block font-display text-xl font-semibold tracking-tight">
+              DPMM Putrajaya
+            </span>
+            <span className="block text-xs font-medium text-cream/70">
+              Dewan Perniagaan Melayu Malaysia
+            </span>
+          </div>
         </Link>
         <div className="mt-10 hidden max-w-sm lg:mt-32 lg:block">
           <p className="font-display text-4xl font-bold leading-tight tracking-tight">
             Membership, in one place.
           </p>
           <p className="mt-4 text-cream/75">
-            Records, fees and renewals for every DPMM member, kept safe and easy to find.
+            Records, fees and renewals for every Dewan Perniagaan Melayu Malaysia (DPMM)
+            member, kept safe and easy to find.
           </p>
         </div>
       </aside>

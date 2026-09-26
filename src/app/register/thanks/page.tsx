@@ -28,13 +28,20 @@ export default async function ThanksPage({
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
             <img
-            src={DPMM_LOGO_DATA_URI}
-            alt="DPMM Putrajaya"
-            width={28}
-            height={28}
-            className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
-          />
-            <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
+              src={DPMM_LOGO_DATA_URI}
+              alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
+              width={28}
+              height={28}
+              className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
+            />
+            <div className="leading-tight">
+              <span className="block font-display text-xl font-semibold tracking-tight">
+                DPMM Putrajaya
+              </span>
+              <span className="block text-xs font-medium text-cream/70">
+                Dewan Perniagaan Melayu Malaysia
+              </span>
+            </div>
           </Link>
         </div>
       </header>
@@ -43,7 +50,9 @@ export default async function ThanksPage({
         <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-primary sm:text-5xl">
           Application received
         </h1>
-        <p className="mt-4 max-w-prose text-lg">Thank you for applying to join DPMM Putrajaya.</p>
+        <p className="mt-4 max-w-prose text-lg">
+          Thank you for applying to join Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya.
+        </p>
 
         <div className="mt-8 grid max-w-2xl gap-4 sm:grid-cols-2">
           {membershipNo && (

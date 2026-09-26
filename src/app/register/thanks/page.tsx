@@ -28,12 +28,12 @@ export default async function ThanksPage({
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
             <img
-              src={DPMM_LOGO_DATA_URI}
-              alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
-              width={28}
-              height={28}
-              className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
-            />
+            src={DPMM_LOGO_DATA_URI}
+            alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
+            width={44}
+            height={44}
+            className="h-11 w-11 shrink-0 rounded-full bg-cream object-contain p-1"
+          />
             <div className="leading-tight">
               <span className="block font-display text-xl font-semibold tracking-tight">
                 DPMM Putrajaya

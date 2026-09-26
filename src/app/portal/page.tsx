@@ -14,12 +14,19 @@ export default async function PortalPage() {
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-6 py-4">
           <img
             src={DPMM_LOGO_DATA_URI}
-            alt="DPMM Putrajaya"
+            alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
             width={28}
             height={28}
             className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
           />
-          <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
+          <div className="leading-tight">
+            <span className="block font-display text-xl font-semibold tracking-tight">
+              DPMM Putrajaya
+            </span>
+            <span className="block text-xs font-medium text-cream/70">
+              Dewan Perniagaan Melayu Malaysia
+            </span>
+          </div>
           <div className="ml-auto flex items-center gap-4">
             <span className="hidden text-sm text-cream/80 sm:inline">{user.email}</span>
             <SignOutButton />

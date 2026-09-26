@@ -7,7 +7,7 @@ import { RegisterForm, type TypeChoice } from "./register-form";
 
 export const metadata: Metadata = {
   title: "Apply for membership",
-  description: "Apply to become a member of DPMM Putrajaya.",
+  description: "Apply to become a member of Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya.",
 };
 export const dynamic = "force-dynamic";
 
@@ -34,13 +34,20 @@ export default async function RegisterPage() {
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
             <img
-            src={DPMM_LOGO_DATA_URI}
-            alt="DPMM Putrajaya"
-            width={28}
-            height={28}
-            className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
-          />
-            <span className="font-display text-xl font-semibold tracking-tight">DPMM Putrajaya</span>
+              src={DPMM_LOGO_DATA_URI}
+              alt="Dewan Perniagaan Melayu Malaysia (DPMM) Putrajaya"
+              width={28}
+              height={28}
+              className="h-7 w-7 shrink-0 rounded-full bg-cream object-contain p-0.5"
+            />
+            <div className="leading-tight">
+              <span className="block font-display text-xl font-semibold tracking-tight">
+                DPMM Putrajaya
+              </span>
+              <span className="block text-xs font-medium text-cream/70">
+                Dewan Perniagaan Melayu Malaysia
+              </span>
+            </div>
           </Link>
           <Link
             href="/login"

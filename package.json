@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "test": "node tests/run-all.mjs"
- {
+  },
   "dependencies": {
     "next": "15.1.9",
     "react": "19.0.3",
@@ -16,7 +16,7 @@
     "drizzle-orm": "^0.38.4",
     "@neondatabase/serverless": "^0.10.4",
     "bcryptjs": "^2.4.3"
-  }
+  },
   "devDependencies": {
     "typescript": "^5.7.3",
     "@types/node": "^22.10.7",

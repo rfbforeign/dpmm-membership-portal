@@ -97,7 +97,7 @@ contents so `package.json` sits directly at the root.
 | `/api/health` | `{"status":"ok","database":"connected","membershipTypes":6}` |
 | `/register` | The application form, with fees for each type |
 | `/login`, then `/admin` | After I set your password: the dashboard shows 248 members, 169 active, 74 expired, 5 pending |
-| `/admin/notifications` | Says **Dry run** and previews about 10 renewal invoices |
+| `/admin/notifications` | Says **Dry run** and shows the current preview; counts vary with the database |
 | `/api/cron/renewals` in a browser | An **Unauthorized** message. That is correct: it is locked |
 
 5. Optional: add your own domain (Vercel, Settings, Domains).

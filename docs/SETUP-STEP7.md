@@ -1,38 +1,39 @@
 # Step 7: Renewals and email reminders
 
-Every morning (9am Malaysia time) the system checks for members whose year is ending and members who owe money.
-It creates renewal invoices, sends the emails, and marks lapsed members as Expired.
+Every morning at 9am Malaysia time, the scheduled job checks for members whose paid period is ending and members
+who owe money. In live mode, it creates renewal invoices, sends reminder emails, and marks recently lapsed members
+as Expired.
 
-**Nothing changes and nothing is sent until you switch it on.** It starts in "dry run" mode.
+The daily automation starts in `dry_run` mode. In that mode, it does not create renewal invoices, change membership
+statuses, or send automation emails; it does record the run in the automation log. Registration confirmations and
+payment receipts are separate event-triggered emails and can be sent when email delivery is configured, even while
+the daily automation is in dry-run mode.
 
 ## What happens each morning (live mode)
 
 | When | What the system does | Email sent |
 |---|---|---|
-| 30 days before a member's paid period ends | Creates the renewal invoice (annual fee, starting the day after the current period) | "Your DPMM membership renewal", with the invoice and how to pay |
-| 3 days before the due date | Nothing | Reminder: invoice due soon |
-| The day after the due date | Nothing | Invoice overdue |
-| 7 days after the due date | Nothing | Final reminder (no more after 30 days overdue) |
-| The paid period ends | Marks the member Expired | "Your membership has expired" |
+| Within 30 days before a member's paid period ends | Creates the renewal invoice (annual fee, starting the day after the current period) | "Your DPMM membership renewal", with the invoice and how to pay |
+| Invoice due within 3 days (including the due date) | Nothing | Reminder: invoice due soon |
+| 1–6 days overdue | Nothing | Invoice overdue |
+| 7–30 days overdue | Nothing | Final reminder |
+| After the paid period ends (within 45 days) | Marks the member Expired | "Your membership has expired" |
 
-Also sent straight away when they happen: a confirmation to new applicants (with their invoice and how to pay),
-and a receipt whenever a payment is recorded.
+Also queued when they happen: a confirmation to new applicants (with their invoice and how to pay), and a receipt
+whenever a payment is recorded. They can be sent immediately when production email delivery is configured.
 
 Each email is sent **once only**, however many times the job runs. Suspended members are never chased.
 
 ## Files
 
-Unzip this bundle **on top of** your project folder (after Step 5c) and allow it to overwrite:
-`src/app/admin/layout.tsx`, `src/modules/registration/actions.ts`, `src/modules/billing/actions.ts` and `vercel.json`
-(if you already had a `vercel.json`, keep both entries: `regions` and `crons`).
-
-No new packages. The database changes (`db/sql/0004_automation.sql`) are **already applied to both Neon branches**.
-For Resend-hosted member email templates, apply `db/sql/0005_email_template_variables.sql` to the
-Neon production branch before deploying the matching application change.
+No new packages are required. Ensure `db/sql/0004_automation.sql` has been applied to each Neon branch used by
+the app. To enable the Resend-hosted member template, apply `db/sql/0005_email_template_variables.sql` to Neon
+Production **before deploying** the application change; the code writes the template variables to the email outbox.
 
 ## Settings (environment variables)
 
-Add these in your `.env.local` and in the Vercel project settings (see `.env.example.additions`):
+Add these in your `.env.local` and in the Vercel project settings. The variable names are also listed in
+[`.env.example`](../.env.example).
 
 | Name | What it is |
 |---|---|
@@ -41,24 +42,16 @@ Add these in your `.env.local` and in the Vercel project settings (see `.env.exa
 | `RESEND_API_KEY` | Resend API key. Required to send email. |
 | `EMAIL_FROM` | Sender address using a domain verified with Resend, e.g. `DPMM Putrajaya <noreply@yourdomain.my>`. Required to send email. |
 | `EMAIL_REPLY_TO` | Optional reply-to address. |
-| `RESEND_MEMBER_TEMPLATE_ID` | Published Resend template ID used for member email. For this app, set it to `479cd403-4f33-4efd-978d-17ceedc860f8`. |
+| `RESEND_MEMBER_TEMPLATE_ID` | Optional. Set to `479cd403-4f33-4efd-978d-17ceedc860f8` to send member email through the published shared template. Migration `0005` is required by this app version and must be applied before deploying it, whether or not this variable is set. |
 | `EMAIL_FORCE_SEND` | Leave unset. Setting this to `true` bypasses the production-only sending guard and can send real emails from Preview or Development. |
 
 ## How to switch it on safely
 
-1. **Deploy and look.** Open **Renewals** in the admin bar. It shows what tomorrow's run *would* do. Today that is:
-   create 10 renewal invoices, and mark 1 member Expired.
-2. **Finish the paid-until review.** 214 members have no paid-until date and 16 Active members look lapsed
-   (see `DPMM_PaidUntil_Review.xlsx`). Until then the system can only automate the 34 members whose dates are known.
-   The automation deliberately ignores members who lapsed more than 45 days ago, so old data never triggers emails.
-3. **Set up email.** Create a free account at resend.com, verify your sending domain (they show the DNS records to add),
-   and create an API key. Put the key in `RESEND_API_KEY` and a sender like `DPMM Putrajaya <noreply@yourdomain.my>` in `EMAIL_FROM`. Optionally set `EMAIL_REPLY_TO` to an address that should receive replies. Leave `EMAIL_FORCE_SEND` unset.
-   The free plan allows 100 emails a day, which is plenty. **Emails are sent only from the live website**, never from your computer or a preview site, unless `EMAIL_FORCE_SEND=true` is explicitly set (not recommended).
-4. **Test.** Apply as a new member at `/register` using your own email address. The confirmation should arrive within a minute.
-   Tell me afterwards and I will remove the test record.
-5. **Go live.** Change `AUTOMATION_MODE` to `live` and redeploy. The first run creates the 10 renewal invoices and emails those members.
-
-An administrator can also send a Resend configuration test with `POST /api/test-resend` on the production site. It uses the configured `EMAIL_FROM` sender and sends to `admindpmm@rfbmalaysia.com`.
+1. **Review the data first.** Check the **Renewals** page in the admin area. Its preview shows the current proposed work, members whose expiry dates need review, and active members without a known paid-until date. Counts change as the database changes. The automation ignores members who lapsed more than 45 days ago, leaving those records for manual review.
+2. **Set up email.** In Resend, verify the sending domain and create an API key. In Vercel, set `RESEND_API_KEY`, `EMAIL_FROM` (for this app, `DPMM <noreply@sistem.rfbmalaysia.com>`), and, if desired, `EMAIL_REPLY_TO` (currently `dpmm.putarajaya@gmail.com`). Set `RESEND_MEMBER_TEMPLATE_ID` to the published template ID above to use the shared template. Leave `EMAIL_FORCE_SEND` unset; it bypasses the production-only sending guard.
+3. **Apply the production migration before deployment.** Apply `db/sql/0005_email_template_variables.sql` to Neon Production before deploying code that writes template variables to `notification_logs`. Confirm the migration and Vercel settings are in place, then deploy.
+4. **Test email.** The administrator-only `POST /api/test-resend` endpoint sends a basic Resend test to `admindpmm@rfbmalaysia.com`; it does not test the shared member template. To test the member email/template path, submit a controlled application at `/register` using an email address you can access. This creates a real application record, so plan its review/removal through the normal admin process.
+5. **Go live only after review.** Confirm the preview and membership data are correct, then change `AUTOMATION_MODE` to `live` and redeploy. The first live run may create renewal invoices, expire recently lapsed members, and queue/send emails shown in the preview.
 
 ## The Renewals page
 
@@ -70,6 +63,6 @@ An administrator can also send a Resend configuration test with `POST /api/test-
 ## Good to know
 
 - Emails are in English for now. Malay versions are easy to add.
-- Vercel's free plan runs a daily job once a day, which is what this needs.
+- Vercel Cron is configured to call the daily job once each day at 9am Malaysia time (`0 1 * * *` UTC in `vercel.json`).
 - Emails older than 14 days are never sent, because they would be out of date.
 - Reminder timing is set in `src/modules/notifications/reminders.ts` (30-day lead, 45-day lookback, reminder stages).

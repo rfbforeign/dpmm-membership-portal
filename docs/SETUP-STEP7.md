@@ -27,6 +27,8 @@ Unzip this bundle **on top of** your project folder (after Step 5c) and allow it
 (if you already had a `vercel.json`, keep both entries: `regions` and `crons`).
 
 No new packages. The database changes (`db/sql/0004_automation.sql`) are **already applied to both Neon branches**.
+For Resend-hosted member email templates, apply `db/sql/0005_email_template_variables.sql` to the
+Neon production branch before deploying the matching application change.
 
 ## Settings (environment variables)
 
@@ -39,6 +41,7 @@ Add these in your `.env.local` and in the Vercel project settings (see `.env.exa
 | `RESEND_API_KEY` | Resend API key. Required to send email. |
 | `EMAIL_FROM` | Sender address using a domain verified with Resend, e.g. `DPMM Putrajaya <noreply@yourdomain.my>`. Required to send email. |
 | `EMAIL_REPLY_TO` | Optional reply-to address. |
+| `RESEND_MEMBER_TEMPLATE_ID` | Published Resend template ID used for member email. For this app, set it to `479cd403-4f33-4efd-978d-17ceedc860f8`. |
 | `EMAIL_FORCE_SEND` | Leave unset. Setting this to `true` bypasses the production-only sending guard and can send real emails from Preview or Development. |
 
 ## How to switch it on safely
@@ -55,7 +58,7 @@ Add these in your `.env.local` and in the Vercel project settings (see `.env.exa
    Tell me afterwards and I will remove the test record.
 5. **Go live.** Change `AUTOMATION_MODE` to `live` and redeploy. The first run creates the 10 renewal invoices and emails those members.
 
-An administrator can also send a Resend configuration test with `POST /api/test-resend` on the production site. It uses the configured `EMAIL_FROM` sender and sends only to Resend's `delivered@resend.dev` test recipient; it does not deliver to a personal inbox.
+An administrator can also send a Resend configuration test with `POST /api/test-resend` on the production site. It uses the configured `EMAIL_FROM` sender and sends to `admindpmm@rfbmalaysia.com`.
 
 ## The Renewals page
 

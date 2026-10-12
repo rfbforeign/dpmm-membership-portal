@@ -219,6 +219,7 @@ async function liveRun(summary: RunSummary): Promise<void> {
       subject: mail.subject,
       text: mail.text,
       html: mail.html,
+      templateVariables: mail.templateVariables,
       dedupeKey: expiredKey(String(e.out_member_id), String(e.expiry_date)),
     });
     if (id) summary.emailsQueued++;
@@ -254,6 +255,7 @@ async function liveRun(summary: RunSummary): Promise<void> {
         subject: mail.subject,
         text: mail.text,
         html: mail.html,
+        templateVariables: mail.templateVariables,
         dedupeKey: invoiceIssuedKey(String(inv.out_invoice_id)),
       });
       if (id) summary.emailsQueued++;
@@ -275,6 +277,7 @@ async function liveRun(summary: RunSummary): Promise<void> {
       subject: mail.subject,
       text: mail.text,
       html: mail.html,
+      templateVariables: mail.templateVariables,
       dedupeKey: reminderKey(d.invoiceId, d.stage),
     });
     if (id) summary.emailsQueued++;
@@ -287,4 +290,3 @@ async function liveRun(summary: RunSummary): Promise<void> {
   summary.needsReview = preview.needsReview;
   summary.activeWithoutDate = preview.activeWithoutDate;
 }
-

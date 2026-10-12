@@ -170,6 +170,7 @@ export async function registerMember(_previous: MemberFormState, formData: FormD
           subject: mail.subject,
           text: mail.text,
           html: mail.html,
+          templateVariables: mail.templateVariables,
           dedupeKey: registrationKey(membershipNo),
         });
         await sendQueued(3);

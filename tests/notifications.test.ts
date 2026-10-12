@@ -34,6 +34,12 @@ for (const [kind, ctx] of [["registration_received", base], ["invoice_issued", {
   const label = `${kind}${(ctx as any).stage ? ":" + (ctx as any).stage : ""}`;
   yes(`${label}: has subject, text and html`, !!e.subject && e.text.length > 50 && e.html.startsWith("<!doctype html>"));
   yes(`${label}: member name is escaped in HTML`, !e.html.includes("<b>Omar</b>") && e.html.includes("&lt;b&gt;Omar&lt;/b&gt;"));
+  eq(`${label}: exposes all Resend template variables`, Object.keys(e.templateVariables).sort(), [
+    "BANK_HTML", "CLOSING_HTML", "CONTACT_HTML", "FACTS_HTML", "HEADER_HTML", "PARAGRAPHS_HTML",
+  ]);
+  yes(`${label}: template paragraph HTML escapes member input`,
+    String(e.templateVariables.PARAGRAPHS_HTML).includes("&lt;b&gt;Omar&lt;/b&gt;") &&
+    !String(e.templateVariables.PARAGRAPHS_HTML).includes("<b>Omar</b>"));
 }
 const reg = renderEmail("registration_received", base);
 yes("registration mentions RHB account, invoice, due date and RM350", reg.text.includes("21601100010342") && reg.text.includes("INV-2026-0012") && reg.text.includes("05/10/2026") && reg.text.includes("RM 350.00"));
@@ -51,6 +57,11 @@ yes("full receipt states paid-until and no balance line", rcFull.text.includes("
 eq("no key -> not configured", getEmailConfig({}), null);
 eq("key but no sender -> not configured", getEmailConfig({ RESEND_API_KEY: "k" }), null);
 eq("configured", getEmailConfig({ RESEND_API_KEY: " k ", EMAIL_FROM: "DPMM <a@b.my>", EMAIL_REPLY_TO: "help@b.my" }), { apiKey: "k", from: "DPMM <a@b.my>", replyTo: "help@b.my" });
+eq("configured member template", getEmailConfig({
+  RESEND_API_KEY: "k",
+  EMAIL_FROM: "DPMM <a@b.my>",
+  RESEND_MEMBER_TEMPLATE_ID: " published-template-id ",
+})?.memberTemplateId, "published-template-id");
 eq("sending blocked on a developer machine", sendingAllowed({ NODE_ENV: "development" }), false);
 eq("sending blocked on a preview site", sendingAllowed({ VERCEL_ENV: "preview" }), false);
 eq("sending allowed on the live site", sendingAllowed({ VERCEL_ENV: "production" }), true);
@@ -68,6 +79,25 @@ eq("sends the key as a bearer token", seen.init.headers.Authorization, "Bearer r
 eq("sends an idempotency key", seen.init.headers["Idempotency-Key"], "notif-123");
 const sent = JSON.parse(seen.init.body);
 eq("body has from/to/subject/reply_to", [sent.from, sent.to, sent.subject, sent.reply_to], ["DPMM <a@b.my>", ["member@example.com"], "S", "help@b.my"]);
+const templateEmail = await sendEmail(cfg, {
+  ...msg,
+  template: { id: "resend-template-id", variables: { HEADER_HTML: "<div>DPMM</div>" } },
+}, fake(200, { id: "template-message" }));
+const templateSent = JSON.parse(seen.init.body);
+eq("template sending succeeds", templateEmail, { ok: true, id: "template-message" });
+eq("template request uses ID and variables without raw body", [
+  templateSent.template,
+  "text" in templateSent,
+  "html" in templateSent,
+], [{ id: "resend-template-id", variables: { HEADER_HTML: "<div>DPMM</div>" } }, false, false]);
+eq("template variable length is capped", await sendEmail(cfg, {
+  ...msg,
+  template: { id: "resend-template-id", variables: { HTML: "x".repeat(2001) } },
+}, fake(200, { id: "not-sent" })), {
+  ok: false,
+  error: 'The Resend template variable "HTML" exceeds 2,000 characters.',
+  retryable: false,
+});
 eq("rejected message: not retryable", await sendEmail(cfg, msg, fake(422, { message: "Invalid `from` field" })), { ok: false, error: "Invalid `from` field", retryable: false });
 eq("bad key: not retryable", (await sendEmail(cfg, msg, fake(401, { message: "API key is invalid" }))).ok === false && (await sendEmail(cfg, msg, fake(401, {}))).retryable, false);
 eq("rate limit: retryable", (await sendEmail(cfg, msg, fake(429, { message: "slow down" }))).retryable, true);

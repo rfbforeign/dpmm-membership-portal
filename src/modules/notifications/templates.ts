@@ -29,7 +29,10 @@ export interface RenderedEmail {
   subject: string;
   text: string;
   html: string;
+  templateVariables: TemplateVariables;
 }
+
+export type TemplateVariables = Record<string, string | number>;
 
 export function escapeHtml(value: string): string {
   return value
@@ -97,20 +100,43 @@ function render(layout: Layout): RenderedEmail {
       )
       .join("");
 
+  const paragraphsHtml = layout.paragraphs.map((p) => `<p style="margin:0 0 14px;">${escapeHtml(p)}</p>`).join("\n");
+  const factsHtml = facts.length
+    ? `<table style="border-collapse:collapse;margin:8px 0 16px;font-size:15px;">${factRows(facts)}</table>`
+    : "";
+  const bankHtml = bank.length
+    ? `<div style="border:1px solid #e4d9c0;padding:12px 16px;margin:16px 0;"><p style="margin:0 0 6px;font-weight:bold;color:#0b2a5b;">How to pay</p><table style="border-collapse:collapse;font-size:15px;">${factRows(bank)}</table></div>`
+    : "";
+  const contactHtml = `<p style="margin:16px 0 0;color:#555;font-size:14px;">${escapeHtml(contact)}</p>`;
+  const closingHtml = `<p style="margin:16px 0 0;">${escapeHtml(closing)}<br>${escapeHtml(ORG.name)}</p>`;
+  const headerHtml = `<div style="background:#0b2a5b;border-bottom:4px solid #d7263d;padding:16px 24px;color:#fbf5e6;font-size:18px;font-weight:bold;">${escapeHtml(ORG.name)}</div>`;
+
   const html = `<!doctype html>
 <html><body style="margin:0;background:#fbf5e6;font-family:Arial,Helvetica,sans-serif;color:#071b3d;">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;">
-  <div style="background:#0b2a5b;border-bottom:4px solid #d7263d;padding:16px 24px;color:#fbf5e6;font-size:18px;font-weight:bold;">${escapeHtml(ORG.name)}</div>
+  ${headerHtml}
   <div style="padding:24px;font-size:15px;line-height:1.55;">
-    ${layout.paragraphs.map((p) => `<p style="margin:0 0 14px;">${escapeHtml(p)}</p>`).join("\n    ")}
-    ${facts.length ? `<table style="border-collapse:collapse;margin:8px 0 16px;font-size:15px;">${factRows(facts)}</table>` : ""}
-    ${bank.length ? `<div style="border:1px solid #e4d9c0;padding:12px 16px;margin:16px 0;"><p style="margin:0 0 6px;font-weight:bold;color:#0b2a5b;">How to pay</p><table style="border-collapse:collapse;font-size:15px;">${factRows(bank)}</table></div>` : ""}
-    <p style="margin:16px 0 0;color:#555;font-size:14px;">${escapeHtml(contact)}</p>
-    <p style="margin:16px 0 0;">${escapeHtml(closing)}<br>${escapeHtml(ORG.name)}</p>
+    ${paragraphsHtml}
+    ${factsHtml}
+    ${bankHtml}
+    ${contactHtml}
+    ${closingHtml}
   </div>
 </div></body></html>`;
 
-  return { subject: layout.subject, text, html };
+  return {
+    subject: layout.subject,
+    text,
+    html,
+    templateVariables: {
+      HEADER_HTML: headerHtml,
+      PARAGRAPHS_HTML: paragraphsHtml,
+      FACTS_HTML: factsHtml,
+      BANK_HTML: bankHtml,
+      CONTACT_HTML: contactHtml,
+      CLOSING_HTML: closingHtml,
+    },
+  };
 }
 
 export function renderEmail(kind: EmailKind, c: MailContext): RenderedEmail {

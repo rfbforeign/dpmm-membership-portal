@@ -1,7 +1,10 @@
+import type { TemplateVariables } from "./templates";
+
 export interface EmailConfig {
   apiKey: string;
   from: string; // for example: DPMM Putrajaya <noreply@yourdomain.org.my>
   replyTo?: string;
+  memberTemplateId?: string;
 }
 
 /** The email settings, or null when the service is not set up. */
@@ -9,7 +12,13 @@ export function getEmailConfig(env: Record<string, string | undefined> = process
   const apiKey = env.RESEND_API_KEY?.trim();
   const from = env.EMAIL_FROM?.trim();
   if (!apiKey || !from) return null;
-  return { apiKey, from, replyTo: env.EMAIL_REPLY_TO?.trim() || undefined };
+  const memberTemplateId = env.RESEND_MEMBER_TEMPLATE_ID?.trim();
+  return {
+    apiKey,
+    from,
+    replyTo: env.EMAIL_REPLY_TO?.trim() || undefined,
+    ...(memberTemplateId ? { memberTemplateId } : {}),
+  };
 }
 
 /**
@@ -26,6 +35,7 @@ export interface OutgoingEmail {
   subject: string;
   text: string;
   html?: string | null;
+  template?: { id: string; variables: TemplateVariables };
   /** Stops the service sending it twice if we retry. */
   idempotencyKey: string;
 }
@@ -45,6 +55,19 @@ export async function sendEmail(
   if (!EMAIL_PATTERN.test(message.to)) {
     return { ok: false, error: "The email address is not valid.", retryable: false };
   }
+  if (message.template) {
+    if (!message.template.id.trim()) {
+      return { ok: false, error: "The Resend template ID is missing.", retryable: false };
+    }
+    for (const [key, value] of Object.entries(message.template.variables)) {
+      if (!/^[A-Za-z0-9_]{1,50}$/.test(key)) {
+        return { ok: false, error: `The Resend template variable name "${key}" is invalid.`, retryable: false };
+      }
+      if (typeof value === "string" && value.length > 2000) {
+        return { ok: false, error: `The Resend template variable "${key}" exceeds 2,000 characters.`, retryable: false };
+      }
+    }
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -60,8 +83,9 @@ export async function sendEmail(
         from: config.from,
         to: [message.to],
         subject: message.subject,
-        text: message.text,
-        ...(message.html ? { html: message.html } : {}),
+        ...(message.template
+          ? { template: { id: message.template.id, variables: message.template.variables } }
+          : { text: message.text, ...(message.html ? { html: message.html } : {}) }),
         ...(config.replyTo ? { reply_to: config.replyTo } : {}),
       }),
       signal: controller.signal,

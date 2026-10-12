@@ -107,9 +107,10 @@ contents so `package.json` sits directly at the root.
 
 1. Create an account at resend.com.
 2. Add your sending domain and add the DNS records it shows (they make your emails trusted, not spam). Wait until it says Verified.
-3. Create an API key. In Vercel add `RESEND_API_KEY` and `EMAIL_FROM`, for example `DPMM Putrajaya <noreply@yourdomain.my>`. Redeploy.
+3. Create an API key. In Vercel add `RESEND_API_KEY` and `EMAIL_FROM`, for example `DPMM Putrajaya <noreply@yourdomain.my>`. For the shared member template, also set `RESEND_MEMBER_TEMPLATE_ID=479cd403-4f33-4efd-978d-17ceedc860f8`. Apply `db/sql/0005_email_template_variables.sql` to Neon Production before deploying the template-enabled app. Redeploy.
 4. **Test:** apply as a new member at `/register` with your own email. The confirmation email should arrive within a minute. Tell me, and I will remove the test record.
 5. Emails are sent **only from the live site**, never from a computer or a preview site.
+6. The administrator-only `POST /api/test-resend` endpoint sends a test message to `admindpmm@rfbmalaysia.com`.
 
 ## 8. Get the data ready  (You and your treasurer)
 

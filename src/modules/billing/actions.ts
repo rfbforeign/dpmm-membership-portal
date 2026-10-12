@@ -148,6 +148,7 @@ export async function recordPayment(_previous: MemberFormState, formData: FormDa
           subject: mail.subject,
           text: mail.text,
           html: mail.html,
+          templateVariables: mail.templateVariables,
           dedupeKey: receiptKey(String(paid.out_receipt_no)),
         });
         await sendQueued(3);

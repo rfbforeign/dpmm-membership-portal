@@ -1,5 +1,6 @@
 import { getSql } from "@/db";
 import { getEmailConfig, sendEmail, sendingAllowed } from "./resend";
+import type { TemplateVariables } from "./templates";
 
 export type NotificationType = "registration" | "renewal_reminder" | "invoice" | "payment_receipt" | "alert";
 
@@ -11,6 +12,7 @@ export interface NewNotification {
   subject: string;
   text: string;
   html: string;
+  templateVariables: TemplateVariables;
   /** Unique per email. A second attempt to queue the same key is ignored. */
   dedupeKey: string;
 }
@@ -18,11 +20,11 @@ export interface NewNotification {
 /** Puts an email in the queue. Returns the new id, or null when this email was already queued before. */
 export async function enqueueNotification(n: NewNotification): Promise<string | null> {
   const rows = await getSql()(
-    `INSERT INTO notification_logs (member_id, invoice_id, type, channel, recipient, subject, message, body_html, status, dedupe_key)
-     VALUES ($1::uuid, $2::uuid, $3::notification_type, 'email', $4, $5, $6, $7, 'queued', $8)
+    `INSERT INTO notification_logs (member_id, invoice_id, type, channel, recipient, subject, message, body_html, template_variables, status, dedupe_key)
+     VALUES ($1::uuid, $2::uuid, $3::notification_type, 'email', $4, $5, $6, $7, $8::jsonb, 'queued', $9)
      ON CONFLICT (dedupe_key) DO NOTHING
      RETURNING id`,
-    [n.memberId, n.invoiceId ?? null, n.type, n.recipient, n.subject, n.text, n.html, n.dedupeKey]
+    [n.memberId, n.invoiceId ?? null, n.type, n.recipient, n.subject, n.text, n.html, JSON.stringify(n.templateVariables), n.dedupeKey]
   );
   return rows.length > 0 ? String(rows[0].id) : null;
 }
@@ -62,7 +64,7 @@ export async function sendQueued(limit: number): Promise<SendSummary> {
        LIMIT $1
        FOR UPDATE SKIP LOCKED
      )
-     RETURNING id, recipient, subject, message, body_html`,
+     RETURNING id, recipient, subject, message, body_html, template_variables`,
     [limit]
   );
 
@@ -70,11 +72,30 @@ export async function sendQueued(limit: number): Promise<SendSummary> {
   let failed = 0;
   for (let i = 0; i < claimed.length; i++) {
     const row = claimed[i];
+    let templateVariables: TemplateVariables | null = null;
+    if (config.memberTemplateId && row.template_variables) {
+      try {
+        templateVariables = parseTemplateVariables(row.template_variables);
+      } catch (error) {
+        console.error("Invalid Resend template variables for notification", row.id, error);
+        failed++;
+        await sql(
+          `UPDATE notification_logs SET status = 'failed', error = $2, attempts = GREATEST(attempts, ${MAX_ATTEMPTS})
+           WHERE id = $1::uuid`,
+          [row.id, "Stored email template variables are invalid."]
+        );
+        continue;
+      }
+    }
+    const template = templateVariables && config.memberTemplateId
+      ? { id: config.memberTemplateId, variables: templateVariables }
+      : undefined;
     const result = await sendEmail(config, {
       to: String(row.recipient),
       subject: String(row.subject ?? ""),
       text: String(row.message ?? ""),
       html: row.body_html ? String(row.body_html) : null,
+      ...(template ? { template } : {}),
       idempotencyKey: String(row.id),
     });
 
@@ -97,4 +118,20 @@ export async function sendQueued(limit: number): Promise<SendSummary> {
   }
 
   return { attempted: claimed.length, sent, failed };
+}
+
+function parseTemplateVariables(value: unknown): TemplateVariables {
+  const parsed: unknown = typeof value === "string" ? JSON.parse(value) : value;
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error("Stored Resend template variables must be a JSON object.");
+  }
+
+  const variables: TemplateVariables = {};
+  for (const [key, variable] of Object.entries(parsed)) {
+    if (typeof variable !== "string" && typeof variable !== "number") {
+      throw new Error(`Stored Resend template variable "${key}" must be a string or number.`);
+    }
+    variables[key] = variable;
+  }
+  return variables;
 }

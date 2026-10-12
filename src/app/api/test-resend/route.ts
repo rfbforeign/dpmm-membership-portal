@@ -1,51 +1,42 @@
-import { Resend } from 'resend';
+import { randomUUID } from "node:crypto";
+import { getCurrentUser } from "@/modules/auth/dal";
+import { getEmailConfig, sendEmail, sendingAllowed } from "@/modules/notifications/resend";
 
-export async function GET() {
-  try {
-    // Verify API key exists in environment
-    if (!process.env.RESEND_API_KEY) {
-      return Response.json(
-        { error: 'RESEND_API_KEY not set' },
-        { status: 500 }
-      );
-    }
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    // Send test email
-    const response = await resend.emails.send({
-      from: 'DPMM Admin <admindpmm@rfbmalaysia.com>', // Updated sender address
-      to: 'delivered@resend.dev',                     // Replace with your target recipient email
-      subject: '✅ DPMM Resend Test',
-      html: `
-        <h1>✅ Resend Email Works!</h1>
-        <p><strong>Sender:</strong> admindpmm@rfbmalaysia.com</p>
-        <p><strong>API Key Status:</strong> Connected</p>
-        <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
-      `,
-      text: `Resend Email Works! Sender: admindpmm@rfbmalaysia.com | Timestamp: ${new Date().toISOString()}`,
-    });
-
-    if (response.error) {
-      return Response.json(
-        { error: response.error },
-        { status: 400 }
-      );
-    }
-
-    return Response.json({
-      success: true,
-      messageId: response.data?.id,
-      message: '✅ Email sent successfully via Resend!',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Resend error:', errorMessage);
-
-    return Response.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+export async function POST() {
+  const user = await getCurrentUser();
+  if (!user) {
+    return Response.json({ error: "Authentication required." }, { status: 401 });
   }
+  if (user.role !== "admin") {
+    return Response.json({ error: "Administrator access required." }, { status: 403 });
+  }
+
+  const config = getEmailConfig();
+  if (!config) {
+    return Response.json({ error: "Resend email settings are not configured." }, { status: 503 });
+  }
+  if (!sendingAllowed()) {
+    return Response.json({ error: "Test emails can only be sent from production." }, { status: 403 });
+  }
+
+  const timestamp = new Date().toISOString();
+  const result = await sendEmail(config, {
+    to: "delivered@resend.dev",
+    subject: "DPMM Resend Test",
+    text: `Resend email configuration is working. Sender: ${config.from}. Timestamp: ${timestamp}`,
+    html: `<h1>Resend email configuration is working</h1><p>Timestamp: ${timestamp}</p>`,
+    idempotencyKey: `resend-test-${randomUUID()}`,
+  });
+
+  if (!result.ok) {
+    console.error("Resend test email failed", result.error);
+    return Response.json({ error: result.error }, { status: 502 });
+  }
+
+  return Response.json({
+    success: true,
+    messageId: result.id,
+    message: "Test email sent successfully via Resend.",
+    timestamp,
+  });
 }

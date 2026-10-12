@@ -36,7 +36,10 @@ Add these in your `.env.local` and in the Vercel project settings (see `.env.exa
 |---|---|
 | `CRON_SECRET` | A long random string you make up. It protects the daily job so only Vercel can start it. **Required.** |
 | `AUTOMATION_MODE` | Leave as `dry_run`. Only the exact word `live` makes it act. |
-| `RESEND_API_KEY`, `EMAIL_FROM` | For sending email. Add them later, in step 4 below. |
+| `RESEND_API_KEY` | Resend API key. Required to send email. |
+| `EMAIL_FROM` | Sender address using a domain verified with Resend, e.g. `DPMM Putrajaya <noreply@yourdomain.my>`. Required to send email. |
+| `EMAIL_REPLY_TO` | Optional reply-to address. |
+| `EMAIL_FORCE_SEND` | Leave unset. Setting this to `true` bypasses the production-only sending guard and can send real emails from Preview or Development. |
 
 ## How to switch it on safely
 
@@ -46,11 +49,13 @@ Add these in your `.env.local` and in the Vercel project settings (see `.env.exa
    (see `DPMM_PaidUntil_Review.xlsx`). Until then the system can only automate the 34 members whose dates are known.
    The automation deliberately ignores members who lapsed more than 45 days ago, so old data never triggers emails.
 3. **Set up email.** Create a free account at resend.com, verify your sending domain (they show the DNS records to add),
-   and create an API key. Put the key in `RESEND_API_KEY` and a sender like `DPMM Putrajaya <noreply@yourdomain.my>` in `EMAIL_FROM`.
-   The free plan allows 100 emails a day, which is plenty. **Emails are sent only from the live website**, never from your computer or a preview site.
+   and create an API key. Put the key in `RESEND_API_KEY` and a sender like `DPMM Putrajaya <noreply@yourdomain.my>` in `EMAIL_FROM`. Optionally set `EMAIL_REPLY_TO` to an address that should receive replies. Leave `EMAIL_FORCE_SEND` unset.
+   The free plan allows 100 emails a day, which is plenty. **Emails are sent only from the live website**, never from your computer or a preview site, unless `EMAIL_FORCE_SEND=true` is explicitly set (not recommended).
 4. **Test.** Apply as a new member at `/register` using your own email address. The confirmation should arrive within a minute.
    Tell me afterwards and I will remove the test record.
 5. **Go live.** Change `AUTOMATION_MODE` to `live` and redeploy. The first run creates the 10 renewal invoices and emails those members.
+
+An administrator can also send a Resend configuration test with `POST /api/test-resend` on the production site. It uses the configured `EMAIL_FROM` sender and sends only to Resend's `delivered@resend.dev` test recipient; it does not deliver to a personal inbox.
 
 ## The Renewals page
 

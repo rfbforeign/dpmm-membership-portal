@@ -88,6 +88,8 @@ contents so `package.json` sits directly at the root.
 | `CRON_SECRET` | A long random string you make up | Yes | No |
 | `AUTOMATION_MODE` | `dry_run` | Yes | No |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Add later, in section 7 | Later | No |
+| `EMAIL_REPLY_TO` | Optional reply-to address | Later | No |
+| `EMAIL_FORCE_SEND` | Leave unset; bypasses the production-only email guard | No | No |
 
 3. Deploy. The region is set to Singapore by `vercel.json`.
 4. **Check the live site.** Every line should behave like this:
@@ -107,9 +109,10 @@ contents so `package.json` sits directly at the root.
 
 1. Create an account at resend.com.
 2. Add your sending domain and add the DNS records it shows (they make your emails trusted, not spam). Wait until it says Verified.
-3. Create an API key. In Vercel add `RESEND_API_KEY` and `EMAIL_FROM`, for example `DPMM Putrajaya <noreply@yourdomain.my>`. Redeploy.
+3. Create an API key. In Vercel add `RESEND_API_KEY` and `EMAIL_FROM`, for example `DPMM Putrajaya <noreply@yourdomain.my>`. Optionally set `EMAIL_REPLY_TO` to an address that should receive replies. Leave `EMAIL_FORCE_SEND` unset; it bypasses the production-only email guard. Redeploy.
 4. **Test:** apply as a new member at `/register` with your own email. The confirmation email should arrive within a minute. Tell me, and I will remove the test record.
-5. Emails are sent **only from the live site**, never from a computer or a preview site.
+5. Emails are sent **only from the live site**, never from a computer or a preview site, unless `EMAIL_FORCE_SEND=true` is explicitly set (not recommended).
+6. The administrator-only `POST /api/test-resend` endpoint sends a test message to Resend's `delivered@resend.dev` recipient using the configured sender. It is restricted to production by the same guard as normal mail.
 
 ## 8. Get the data ready  (You and your treasurer)
 

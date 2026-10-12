@@ -21,7 +21,7 @@ export async function POST() {
 
   const timestamp = new Date().toISOString();
   const result = await sendEmail(config, {
-    to: "delivered@resend.dev",
+    to: "admindpmm@rfbmalaysia.com",
     subject: "DPMM Resend Test",
     text: `Resend email configuration is working. Sender: ${config.from}. Timestamp: ${timestamp}`,
     html: `<h1>Resend email configuration is working</h1><p>Timestamp: ${timestamp}</p>`,

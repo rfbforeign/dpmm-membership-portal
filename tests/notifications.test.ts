@@ -1,4 +1,4 @@
-import { classifyReminderStage, invoiceIssuedKey, reminderKey, expiredKey, registrationKey, receiptKey } from "@/modules/notifications/reminders";
+import { EXPIRY_DELAY_DAYS, invoiceIssuedKey, reminderKey, expiredKey, registrationKey, receiptKey } from "@/modules/notifications/reminders";
 import { renderEmail, escapeHtml, fmtDate, fmtMoney } from "@/modules/notifications/templates";
 import { getEmailConfig, sendingAllowed, sendEmail } from "@/modules/notifications/resend";
 import { isAuthorizedCron } from "@/lib/cron-auth";
@@ -7,16 +7,8 @@ async function main() {
 const eq = (n: string, got: unknown, want: unknown) => { const ok = JSON.stringify(got) === JSON.stringify(want); if (!ok) fail++; console.log(ok ? "ok  " : "FAIL", n, ok ? "" : `got ${JSON.stringify(got)} want ${JSON.stringify(want)}`); };
 const yes = (n: string, c: boolean) => eq(n, c, true);
 
-// --- reminder schedule
-eq("due in 4 days: nothing yet", classifyReminderStage(4), null);
-eq("due in 3 days", classifyReminderStage(3), "due_soon");
-eq("due today", classifyReminderStage(0), "due_soon");
-eq("1 day overdue", classifyReminderStage(-1), "overdue_1");
-eq("6 days overdue", classifyReminderStage(-6), "overdue_1");
-eq("7 days overdue", classifyReminderStage(-7), "overdue_7");
-eq("30 days overdue", classifyReminderStage(-30), "overdue_7");
-eq("31 days overdue: left to a person", classifyReminderStage(-31), null);
-eq("very old: never chased automatically", classifyReminderStage(-400), null);
+// --- automation schedule
+eq("expiry is delayed by 365 days", EXPIRY_DELAY_DAYS, 365);
 eq("keys are stable and distinct", new Set([invoiceIssuedKey("a"), reminderKey("a", "due_soon"), reminderKey("a", "overdue_1"), reminderKey("a", "overdue_7"), expiredKey("m", "2026-01-01"), registrationKey("PJ-1"), receiptKey("RCP-1")]).size, 7);
 
 // --- formatting + safety

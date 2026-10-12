@@ -10,7 +10,7 @@ import {
   type NotificationLogRow,
   type NotificationRunRow,
 } from "@/modules/notifications/queries";
-import { EXPIRY_LOOKBACK_DAYS, RENEWAL_LEAD_DAYS } from "@/modules/notifications/reminders";
+import { EXPIRY_DELAY_DAYS, RENEWAL_LEAD_DAYS } from "@/modules/notifications/reminders";
 
 export const metadata: Metadata = { title: "Renewals and emails" };
 export const dynamic = "force-dynamic";
@@ -21,12 +21,6 @@ const TYPE_LABEL: Record<string, string> = {
   renewal_reminder: "Payment reminder",
   payment_receipt: "Receipt",
   alert: "Membership expired",
-};
-
-const STAGE_LABEL: Record<string, string> = {
-  due_soon: "due soon",
-  overdue_1: "overdue",
-  overdue_7: "final reminder",
 };
 
 const SKIPPED_TEXT: Record<string, string> = {
@@ -92,7 +86,7 @@ export default async function NotificationsPage({
               )}{" "}
               {preview.mode === "live"
                 ? "It runs every morning and makes the changes listed below."
-                : "It runs every morning but only reports what it would do. Nothing is changed or sent."}
+                : "It runs every morning but only reports what it would do. No daily automation changes or emails are made."}
             </dd>
           </div>
           <div className="grid gap-1 px-5 py-3.5 sm:grid-cols-[10rem_1fr] sm:gap-4">
@@ -106,7 +100,7 @@ export default async function NotificationsPage({
         <h2 id="next-heading" className="font-display text-xl font-semibold text-primary">What the next run would do</h2>
         <dl className="mt-3 rounded-md border border-line bg-paper">
           <div className="grid gap-1 border-b border-line px-5 py-3.5 sm:grid-cols-[16rem_1fr] sm:gap-4">
-            <dt>Mark as Expired <span className="block text-sm text-primary-deep/70">paid period ended in the last {EXPIRY_LOOKBACK_DAYS} days</span></dt>
+            <dt>Mark as Expired <span className="block text-sm text-primary-deep/70">paid period ended at least {EXPIRY_DELAY_DAYS} days ago</span></dt>
             <dd><Names items={preview.willExpire.map((m) => m.membershipNo)} empty="None" /></dd>
           </div>
           <div className="grid gap-1 border-b border-line px-5 py-3.5 sm:grid-cols-[16rem_1fr] sm:gap-4">
@@ -114,19 +108,18 @@ export default async function NotificationsPage({
             <dd><Names items={preview.renewalInvoices.map((m) => m.membershipNo)} empty="None" /></dd>
           </div>
           <div className="grid gap-1 px-5 py-3.5 sm:grid-cols-[16rem_1fr] sm:gap-4">
-            <dt>Send payment reminders <span className="block text-sm text-primary-deep/70">unpaid invoices</span></dt>
-            <dd><Names items={preview.reminders.map((r) => `${r.invoiceNo} (${STAGE_LABEL[r.stage]})`)} empty="None" /></dd>
+            <dt>Payment reminders</dt>
+            <dd>Disabled</dd>
           </div>
         </dl>
 
-        {(preview.needsReview > 0 || preview.activeWithoutDate > 0) && (
+        {(preview.awaitingExpiry > 0 || preview.activeWithoutDate > 0) && (
           <div className="mt-4 border-l-4 border-accent bg-paper px-5 py-4">
-            <p className="font-semibold text-primary">Needs a person</p>
+            <p className="font-semibold text-primary">Waiting / needs a person</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              {preview.needsReview > 0 && (
+              {preview.awaitingExpiry > 0 && (
                 <li>
-                  <strong>{preview.needsReview}</strong> Active members had a paid period that ended more than {EXPIRY_LOOKBACK_DAYS} days ago. The
-                  automation leaves them alone. Check whether they renewed.
+                  <strong>{preview.awaitingExpiry}</strong> Active members are within the {EXPIRY_DELAY_DAYS}-day period after their paid period ended and will not be marked Expired yet.
                 </li>
               )}
               {preview.activeWithoutDate > 0 && (

@@ -1,7 +1,7 @@
 # DPMM Membership System
 
 Membership management for DPMM Putrajaya: online applications, member directory, invoices and payments,
-automatic renewals and reminder emails. Built with Next.js (App Router), Tailwind, PostgreSQL on Neon, deployed on Vercel.
+automatic renewals and member notifications. Built with Next.js (App Router), Tailwind, PostgreSQL on Neon, deployed on Vercel.
 
 **Start with `docs/GO-LIVE.md`.** It is the checklist for launching.
 
@@ -28,7 +28,7 @@ which is the live members' database.
 | `src/modules/` | The business logic, one folder per feature: `auth`, `members`, `registration`, `billing`, `notifications`, `dashboard`, `audit` |
 | `src/lib/` | Small shared helpers: money, dates, phone and IC cleaning, masking, your organisation details (`org.ts`) |
 | `src/db/` | Database connection and table definitions |
-| `db/sql/` | The database migrations, in order (0000 to 0005). Apply any migration not yet run on your Neon branches |
+| `db/sql/` | The database migrations, in order (0000 to 0006). Apply any migration not yet run on your Neon branches |
 | `scripts/import/` | The one-off Excel import used to load the original 248 members |
 | `tests/` | Automated checks for the rules that matter (money, dates, security, validation, emails) |
 | `docs/` | One short guide per build step, and the go-live checklist |

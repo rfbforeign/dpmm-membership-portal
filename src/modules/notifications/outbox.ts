@@ -57,7 +57,8 @@ export async function sendQueued(limit: number): Promise<SendSummary> {
     `UPDATE notification_logs SET attempts = attempts + 1, last_attempt_at = now()
      WHERE id IN (
        SELECT id FROM notification_logs
-       WHERE channel = 'email' AND created_at > now() - interval '14 days'
+       WHERE channel = 'email' AND type <> 'renewal_reminder'
+         AND created_at > now() - interval '14 days'
          AND ( (status = 'queued' AND (last_attempt_at IS NULL OR last_attempt_at < now() - interval '10 minutes'))
             OR (status = 'failed' AND attempts < ${MAX_ATTEMPTS} AND last_attempt_at < now() - interval '1 hour') )
        ORDER BY created_at

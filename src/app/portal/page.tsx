@@ -5,6 +5,7 @@ import { DPMM_LOGO_DATA_URI } from "@/lib/logo";
 import { SignOutButton } from "@/modules/auth/sign-out-button";
 import { InvoiceStatusBadge } from "@/modules/billing/invoice-status-badge";
 import { getPortalMemberData } from "@/modules/portal/queries";
+import { ProfilePhotoForm } from "./profile-photo-form";
 
 export const metadata: Metadata = { title: "Member portal" };
 export const dynamic = "force-dynamic";
@@ -55,6 +56,7 @@ export default async function PortalPage() {
                 <p className="mt-2 text-sm text-primary-deep/75">
                   {data.member.membershipNo} · {data.member.fasal} {data.member.category}
                 </p>
+                <ProfilePhotoForm initialPhotoUrl={data.member.photoUrl} fullName={data.member.fullName} />
               </div>
               <span className="rounded-full bg-primary px-3 py-1 text-sm font-semibold capitalize text-cream">
                 {data.member.status}

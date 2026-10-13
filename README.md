@@ -24,11 +24,11 @@ which is the live members' database.
 
 | Folder | What it holds |
 |---|---|
-| `src/app/` | Pages and routes: public (`/`, `/register`, `/login`), staff (`/admin/...`), member portal placeholder (`/portal`), and the daily job (`/api/cron/renewals`) |
-| `src/modules/` | The business logic, one folder per feature: `auth`, `members`, `registration`, `billing`, `notifications`, `dashboard`, `audit` |
+| `src/app/` | Pages and routes: public (`/`, `/register`, `/login`), staff (`/admin/...`), member portal (`/portal`), and the daily job (`/api/cron/renewals`) |
+| `src/modules/` | The business logic, one folder per feature: `auth`, `members`, `registration`, `billing`, `portal`, `notifications`, `dashboard`, `audit` |
 | `src/lib/` | Small shared helpers: money, dates, phone and IC cleaning, masking, your organisation details (`org.ts`) |
 | `src/db/` | Database connection and table definitions |
-| `db/sql/` | The database migrations, in order (0000 to 0006). Apply any migration not yet run on your Neon branches |
+| `db/sql/` | The database migrations, in order (0000 to 0007). Apply any migration not yet run on your Neon branches |
 | `scripts/import/` | The one-off Excel import used to load the original 248 members |
 | `tests/` | Automated checks for the rules that matter (money, dates, security, validation, emails) |
 | `docs/` | One short guide per build step, and the go-live checklist |

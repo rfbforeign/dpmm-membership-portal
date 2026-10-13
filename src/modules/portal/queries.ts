@@ -18,6 +18,7 @@ export interface PortalMemberData {
     businessSector: string | null;
     businessType: string | null;
     companyName: string | null;
+    photoUrl: string | null;
   };
   invoices: {
     id: string;
@@ -35,23 +36,38 @@ export interface PortalMemberData {
   };
 }
 
+export async function findPortalMemberId(userId: string, email: string): Promise<string | null> {
+  const [member] = await getSql()(
+    `SELECT id
+     FROM members
+     WHERE deleted_at IS NULL
+       AND (user_id = $1 OR (user_id IS NULL AND email = $2))
+     ORDER BY CASE WHEN user_id = $1 THEN 0 ELSE 1 END, joined_date DESC
+     LIMIT 1`,
+    [userId, email]
+  );
+  return member ? String(member.id) : null;
+}
+
 /** Finds the signed-in member's record and recent invoices. */
 export async function getPortalMemberData(userId: string, email: string): Promise<PortalMemberData | null> {
   const sql = getSql();
+  const memberId = await findPortalMemberId(userId, email);
+  if (!memberId) return null;
+
   const [row] = await sql(
     `SELECT m.id, m.full_name, m.email, m.phone, m.membership_no, m.status,
             t.category, t.fasal, m.joined_date::text AS member_since, m.expiry_date::text AS expiry_date,
             m.mailing_address, m.registered_address, s.name AS business_sector,
-            bt.name AS business_type, m.company_name
+            bt.name AS business_type, m.company_name, p.updated_at::text AS photo_updated_at
      FROM members m
      JOIN membership_types t ON t.id = m.membership_type_id
      LEFT JOIN business_sectors s ON s.id = m.business_sector_id
      LEFT JOIN business_types bt ON bt.id = m.business_type_id
-     WHERE m.deleted_at IS NULL
-       AND (m.user_id = $1 OR (m.user_id IS NULL AND m.email = $2))
-     ORDER BY CASE WHEN m.user_id = $1 THEN 0 ELSE 1 END, m.joined_date DESC
+     LEFT JOIN member_profile_photos p ON p.member_id = m.id
+     WHERE m.id = $1 AND m.deleted_at IS NULL
      LIMIT 1`,
-    [userId, email]
+    [memberId]
   );
 
   if (!row) return null;
@@ -92,6 +108,9 @@ export async function getPortalMemberData(userId: string, email: string): Promis
       businessSector: row.business_sector ? String(row.business_sector) : null,
       businessType: row.business_type ? String(row.business_type) : null,
       companyName: row.company_name ? String(row.company_name) : null,
+      photoUrl: row.photo_updated_at
+        ? `/api/portal/member/photo?v=${encodeURIComponent(String(row.photo_updated_at))}`
+        : null,
     },
     invoices: invoices.map((invoice) => ({
       id: String(invoice.id),

@@ -1,35 +1,50 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getSession } from "@/modules/auth/session";
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    // Get the current session
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userEmail = session.user.email;
+
+    // Get member data from database
     const sql = getSql();
     const [member] = await sql(
-      `SELECT id, full_name, email, phone, membership_no, status, category, 
-              member_since, expiry_date, mailing_address, registered_address,
-              business_sector, business_type, company_name, designation, photo_url
-       FROM members WHERE email = $1 AND deleted_at IS NULL`,
-      [user.email]
+      `SELECT 
+        id, full_name, email, phone, membership_no, status, category, 
+        member_since, expiry_date, mailing_address, registered_address,
+        business_sector, business_type, company_name, designation, photo_url
+       FROM members 
+       WHERE email = $1 AND deleted_at IS NULL`,
+      [userEmail]
     );
 
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
+    // Get invoices for this member
     const invoices = await sql(
-      `SELECT id, invoice_no, invoice_type, amount, balance, status, 
-              issued_date, due_date, paid_date
-       FROM invoice_summary WHERE member_id = $1 ORDER BY issued_date DESC LIMIT 10`,
+      `SELECT 
+        id, invoice_no, invoice_type, amount, balance, status, 
+        issued_date, due_date, paid_date
+       FROM invoice_summary
+       WHERE member_id = $1
+       ORDER BY issued_date DESC
+       LIMIT 10`,
       [member.id]
     );
 
-    const totalOpenInvoices = invoices.filter((inv: any) => inv.status === "unpaid").length;
+    // Calculate totals
+    const totalOpenInvoices = invoices
+      .filter((inv: any) => inv.status === "unpaid")
+      .length;
+    
     const totalBalance = invoices
       .filter((inv: any) => inv.status === "unpaid")
       .reduce((sum: number, inv: any) => sum + parseFloat(inv.balance || 0), 0);
@@ -71,6 +86,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Portal member API error:", error);
-    return NextResponse.json({ error: "Failed to fetch member data" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch member data" },
+      { status: 500 }
+    );
   }
 }
